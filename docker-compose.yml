@@ -1,0 +1,20 @@
+db:
+  image: postgres
+  environment:
+    POSTGRES_PASSWORD: 2451
+liquibase:
+  image: sequenceiq/liquibase
+  links:
+    - db
+  volumes:
+    - ./liquibase:/changelogs
+pgcli:
+  image: mribeiro/pgcli
+  links:
+    - db
+app:
+  build: .
+  links:
+    - db
+  volumes:
+    - ./app:/app
