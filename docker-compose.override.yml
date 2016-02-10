@@ -1,0 +1,8 @@
+app:
+  volumes:
+    - ./app:/app
+pgcli:
+  image: mribeiro/pgcli
+  links:
+    - db
+  command: -U postgres -h db
