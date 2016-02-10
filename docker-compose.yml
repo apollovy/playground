@@ -1,7 +1,7 @@
 db:
   image: postgres
   environment:
-    POSTGRES_PASSWORD: 2451
+    POSTGRES_PASSWORD: ${DB_PASSWORD}
 liquibase:
   image: sequenceiq/liquibase
   links:
@@ -13,7 +13,7 @@ liquibase:
     liquibase
       --changeLogFile=/changelogs/changelog.xml
       --username=postgres
-      --password=2451
+      --password=${DB_PASSWORD}
       --url="jdbc:postgresql://db/postgres"
       --classpath=/opt/jdbc_drivers/postgresql-9.3-1102.jdbc41.jar
       update
@@ -21,3 +21,5 @@ app:
   build: .
   links:
     - db
+  environment:
+    DB_PASSWORD: ${DB_PASSWORD}

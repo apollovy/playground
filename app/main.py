@@ -1,11 +1,14 @@
 """Main entry point into app."""
 
 
+import os
 import asyncio
 import aiopg
 
 
-DSN = 'dbname=postgres user=postgres password=2451 host=db'
+DSN = 'dbname=postgres user=postgres password={} host=db'.format(
+    os.environ.get('DB_PASSWORD', ''),
+)
 
 
 async def go():
