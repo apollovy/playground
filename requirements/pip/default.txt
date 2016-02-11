@@ -1,3 +1,4 @@
-aiopg
+arstecnica.sqlalchemy.async
+psycopg2
 sqlalchemy
 zope.interface
