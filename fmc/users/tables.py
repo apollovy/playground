@@ -1,13 +1,7 @@
 """Tables declarations for users app."""
-import logging
-
-import zope.component as zcomp
 import zope.interface as zif
 
 import fmc.interfaces as ifs
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 @zif.implementer(ifs.IFMCObject)
@@ -15,25 +9,25 @@ class Tables:
     """Incapsulation of tables creation."""
 
     def __init__(self):
-        self.gsm = zcomp.getGlobalSiteManager()
+        self.logger = ifs.ILoggerFactory(self).getLogger(__name__)
         self._metadata = ifs.IMetadata(self)
         self._table_factory = ifs.ITableFactory(self)
         self._column_factory = ifs.IColumnFactory(self)
         self._integer_factory = ifs.IIntegerFactory(self)
         self._string_factory = ifs.IStringFactory(self)
-        LOGGER.debug(
+        self.logger.debug(
             'self._metadata: %s', self._metadata,
         )
-        LOGGER.debug(
+        self.logger.debug(
             'self._table_factory: %s', self._table_factory,
         )
-        LOGGER.debug(
+        self.logger.debug(
             'self._column_factory: %s', self._column_factory,
         )
-        LOGGER.debug(
+        self.logger.debug(
             'self._integer_factory: %s', self._integer_factory,
         )
-        LOGGER.debug(
+        self.logger.debug(
             'self._string_factory: %s', self._string_factory,
         )
 

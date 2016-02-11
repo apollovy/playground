@@ -19,52 +19,67 @@ import fmc.users.tables as tables
 LOGGER = logging.getLogger(__name__)
 
 
-async def create_user(name):
-    """Create a user."""
-    user = ifs.IUser(name)
-    registrator = ifs.IRegistrator(user)
-    result = await registrator.register()
-    print(result.inserted_primary_key)
+class App:
+    """Incapsulates logic."""
 
-    return user
+    def __init__(self, loop):
+        """Init with event loop."""
+        self.loop = loop
+        self.gsm = zcomp.getGlobalSiteManager()
+        self.register()
 
+    async def create_user(self, name):
+        """Create a user."""
+        user = ifs.IUser(name)
+        registrator = ifs.IRegistrator(user)
+        result = await registrator.register()
+        print(result.inserted_primary_key)
 
-async def go(loop):
-    logging.basicConfig(level='DEBUG')
-    dsn = 'postgres://postgres:{}@db/postgres'.format(
-        os.environ.get('DB_PASSWORD', ''),
-    )
-    engine = sa_async.create_engine(dsn, loop=loop)
-    metadata = sa.MetaData(bind=engine)
-    async with await engine.connect() as conn:
-        register(metadata, conn)
-        await create_user('apollov')
+        return user
 
+    async def go(self):
+        logging.basicConfig(level='DEBUG')
+        dsn = 'postgres://postgres:{}@db/postgres'.format(
+            os.environ.get('DB_PASSWORD', ''),
+        )
+        engine = sa_async.create_engine(dsn, loop=self.loop)
+        metadata = sa.MetaData(bind=engine)
+        async with await engine.connect() as conn:
+            self.post_register(metadata, conn)
+            await self.create_user('apollov')
 
-def register(metadata, connection):
-    """Fill the registry with adapters."""
-    gsm = zcomp.getGlobalSiteManager()
-    gsm.registerAdapter(models.User, [str], ifs.IUser),
-    gsm.registerAdapter(models.UserRegistrator)
+    def register(self):
+        """Fill the registry with adapters."""
+        self.gsm.registerAdapter(models.User, [str], ifs.IUser),
+        self.gsm.registerAdapter(models.UserRegistrator)
 
-    for interface, obj in [
-        (ifs.IConnection, lambda x: connection),
-        (ifs.ITableFactory, lambda x: sa.Table),
-        (ifs.IColumnFactory, lambda x: sa.Column),
-        (ifs.IIntegerFactory, lambda x: sa.Integer),
-        (ifs.IStringFactory, lambda x: sa.String),
-        (ifs.IMetadata, lambda x: metadata),
-    ]:
-        LOGGER.debug('interface: %s', interface)
-        LOGGER.debug('obj: %s', obj)
-        gsm.registerAdapter(obj, [ifs.IFMCObject], interface)
-    # tables.Tables() must be resolved after other things, because it
-    # uses some of the interfaces described earlier
-    gsm.registerAdapter(
-        lambda x: tables.Tables().users, [ifs.IRegistrator], ifs.ITable,
-    )
+        for interface, obj in [
+            (ifs.ITableFactory, lambda x: sa.Table),
+            (ifs.IColumnFactory, lambda x: sa.Column),
+            (ifs.IIntegerFactory, lambda x: sa.Integer),
+            (ifs.IStringFactory, lambda x: sa.String),
+            (ifs.ILoggerFactory, lambda x: logging),
+        ]:
+            LOGGER.debug('interface: %s', interface)
+            LOGGER.debug('obj: %s', obj)
+            self.gsm.registerAdapter(obj, [ifs.IFMCObject], interface)
+
+    def post_register(self, metadata, connection):
+        """Register what cannot be registered initially."""
+        self.gsm.registerAdapter(
+            lambda x: metadata, [ifs.IFMCObject], ifs.IMetadata,
+        )
+        self.gsm.registerAdapter(
+            lambda x: connection, [ifs.IFMCObject], ifs.IConnection,
+        )
+        # tables.Tables() must be resolved after other things, because it
+        # uses some of the interfaces described earlier
+        self.gsm.registerAdapter(
+            lambda x: tables.Tables().users, [ifs.IRegistrator], ifs.ITable,
+        )
 
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(go(loop))
+    app = App(loop)
+    loop.run_until_complete(app.go())
