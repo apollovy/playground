@@ -1,22 +1,24 @@
 """Models for users application."""
-import zope.interface
+import zope.component as zcomp
+import zope.interface as zif
 
-import fmc.interfaces
+import fmc.interfaces as ifs
 
 
-@zope.interface.implementer(fmc.interfaces.IUser, fmc.interfaces.IRegistrable)
-class User(object):
+@zif.implementer(ifs.IUser)
+class User:
     def __init__(self, name):
         self.name = name
-        self.table = fmc.interfaces.REGISTRY.lookup(
-            [fmc.interfaces.IUser],
-            fmc.interfaces.ITable,
-        )
-        self.connection = fmc.interfaces.REGISTRY.lookup(
-            [fmc.interfaces.IUser],
-            fmc.interfaces.IConnection,
-        )
+
+
+@zif.implementer(ifs.IRegistrator)
+@zcomp.adapter(ifs.IUser)
+class UserRegistrator:
+    def __init__(self, user):
+        self.user = user
+        self.table = ifs.ITable(self)
+        self.connection = ifs.IConnection(self)
 
     async def register(self):
-        statement = self.table.insert().values(name=self.name)
+        statement = self.table.insert().values(name=self.user.name)
         return await self.connection.execute(statement)

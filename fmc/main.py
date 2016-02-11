@@ -5,7 +5,7 @@ import asyncio
 import logging
 import os
 
-import zope.interface.adapter
+import zope.component as zcomp
 
 import sqlalchemy as sa
 
@@ -19,38 +19,50 @@ import fmc.users.tables as tables
 LOGGER = logging.getLogger(__name__)
 
 
+async def create_user(name):
+    """Create a user."""
+    user = ifs.IUser(name)
+    registrator = ifs.IRegistrator(user)
+    result = await registrator.register()
+    print(result.inserted_primary_key)
+
+    return user
+
+
 async def go(loop):
     logging.basicConfig(level='DEBUG')
     dsn = 'postgres://postgres:{}@db/postgres'.format(
         os.environ.get('DB_PASSWORD', ''),
     )
-    metadata = sa.MetaData()
     engine = sa_async.create_engine(dsn, loop=loop)
+    metadata = sa.MetaData(bind=engine)
     async with await engine.connect() as conn:
         register(metadata, conn)
-        apollov = models.User(name='apollov')
-        result = await apollov.register()
-        print(result.inserted_primary_key)
+        await create_user('apollov')
 
 
 def register(metadata, connection):
     """Fill the registry with adapters."""
-    for requirements, interface, name, obj in [
-        ([ifs.IUser], ifs.IConnection, '', connection),
-        ([ifs.IFMCObject], ifs.ITableFactory, '', sa.Table),
-        ([ifs.IFMCObject], ifs.IColumnFactory, '', sa.Column),
-        ([ifs.IFMCObject], ifs.IIntegerFactory, '', sa.Integer),
-        ([ifs.IFMCObject], ifs.IStringFactory, '', sa.String),
-        ([ifs.IFMCObject], ifs.IMetadata, '', metadata),
+    gsm = zcomp.getGlobalSiteManager()
+    gsm.registerAdapter(models.User, [str], ifs.IUser),
+    gsm.registerAdapter(models.UserRegistrator)
+
+    for interface, obj in [
+        (ifs.IConnection, lambda x: connection),
+        (ifs.ITableFactory, lambda x: sa.Table),
+        (ifs.IColumnFactory, lambda x: sa.Column),
+        (ifs.IIntegerFactory, lambda x: sa.Integer),
+        (ifs.IStringFactory, lambda x: sa.String),
+        (ifs.IMetadata, lambda x: metadata),
     ]:
-        LOGGER.debug('requirements: %s', requirements)
         LOGGER.debug('interface: %s', interface)
-        LOGGER.debug('name: %s', name)
         LOGGER.debug('obj: %s', obj)
-        ifs.REGISTRY.register(requirements, interface, name, obj)
+        gsm.registerAdapter(obj, [ifs.IFMCObject], interface)
     # tables.Tables() must be resolved after other things, because it
     # uses some of the interfaces described earlier
-    ifs.REGISTRY.register([ifs.IUser], ifs.ITable, '', tables.Tables().users)
+    gsm.registerAdapter(
+        lambda x: tables.Tables().users, [ifs.IRegistrator], ifs.ITable,
+    )
 
 
 if __name__ == '__main__':
