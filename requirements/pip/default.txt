@@ -1,1 +1,3 @@
 aiopg
+sqlalchemy
+zope.interface

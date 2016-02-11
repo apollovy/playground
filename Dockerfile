@@ -8,7 +8,9 @@ RUN pip install --upgrade pip
 # Content-dependent
 COPY ./requirements /tmp/requirements
 RUN pip install -r /tmp/requirements/pip/default.txt
-COPY ./app /app
+RUN mkdir -p /app/fmc
+COPY ./fmc /app/fmc
 
 ENTRYPOINT
-CMD python /app/main.py
+ENV PYTHONPATH=/app
+CMD python /app/fmc/main.py

@@ -1,6 +1,6 @@
 app:
   volumes:
-    - ./app:/app
+    - ./fmc:/app/fmc
 pgcli:
   image: mribeiro/pgcli
   links:
