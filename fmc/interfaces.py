@@ -1,4 +1,7 @@
 """Interfaces for FMC project."""
+# pylint:disable=inherit-non-class
+# pylint:disable=no-self-argument
+# pylint:disable=no-method-argument
 import zope.interface as zif
 
 
@@ -66,7 +69,7 @@ class IStringFactory(IDBFieldTypeFactory):
 class ILoggerFactory(zif.Interface):
     """Something that creates loggers."""
 
-    def getLogger(name):
+    def getLogger(name):  # pylint:disable=invalid-name
         """Return `ILogger` object."""
 
 

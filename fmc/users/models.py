@@ -1,4 +1,7 @@
 """Models for users application."""
+# pylint:disable=missing-docstring
+# pylint:disable=too-few-public-methods
+# pylint:disable=too-many-function-args
 import zope.component as zcomp
 import zope.interface as zif
 

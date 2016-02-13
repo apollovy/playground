@@ -1,4 +1,7 @@
 """Tables declarations for users app."""
+# pylint:disable=missing-docstring
+# pylint:disable=too-few-public-methods
+# pylint:disable=too-many-function-args
 import zope.interface as zif
 
 import fmc.interfaces as ifs

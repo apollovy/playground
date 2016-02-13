@@ -9,7 +9,8 @@ import zope.component as zcomp
 
 import sqlalchemy as sa
 
-import arstecnica.sqlalchemy.async as sa_async
+# Guess that module named after keyword may create problems
+import arstecnica.sqlalchemy.async as sa_async  # pylint:disable=import-error
 
 import fmc.interfaces as ifs
 import fmc.users.models as models
@@ -37,7 +38,8 @@ class App:
 
         return user
 
-    async def go(self):
+    async def start(self):
+        """Start the application, running its main logic."""
         logging.basicConfig(level='DEBUG')
         dsn = 'postgres://postgres:{}@db/postgres'.format(
             os.environ.get('DB_PASSWORD', ''),
@@ -50,15 +52,15 @@ class App:
 
     def register(self):
         """Fill the registry with adapters."""
-        self.gsm.registerAdapter(models.User, [str], ifs.IUser),
+        self.gsm.registerAdapter(models.User, [str], ifs.IUser)
         self.gsm.registerAdapter(models.UserRegistrator)
 
         for interface, obj in [
-            (ifs.ITableFactory, lambda x: sa.Table),
-            (ifs.IColumnFactory, lambda x: sa.Column),
-            (ifs.IIntegerFactory, lambda x: sa.Integer),
-            (ifs.IStringFactory, lambda x: sa.String),
-            (ifs.ILoggerFactory, lambda x: logging),
+                (ifs.ITableFactory, lambda x: sa.Table),
+                (ifs.IColumnFactory, lambda x: sa.Column),
+                (ifs.IIntegerFactory, lambda x: sa.Integer),
+                (ifs.IStringFactory, lambda x: sa.String),
+                (ifs.ILoggerFactory, lambda x: logging),
         ]:
             LOGGER.debug('interface: %s', interface)
             LOGGER.debug('obj: %s', obj)
@@ -80,6 +82,6 @@ class App:
 
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    app = App(loop)
-    loop.run_until_complete(app.go())
+    LOOP = asyncio.get_event_loop()
+    APP = App(LOOP)
+    LOOP.run_until_complete(APP.start())

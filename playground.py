@@ -1,4 +1,8 @@
 """Play here carefully."""
+# pylint:disable=inherit-non-class
+# pylint:disable=invalid-name
+# pylint:disable=missing-docstring
+# pylint:disable=too-few-public-methods
 import zope.interface.registry
 
 
@@ -50,9 +54,9 @@ def test_registry():
     registry = zope.interface.registry.AdapterRegistry()
     registry.register([IUser1], ITool, '', 42)
     registry.register([], ITool, '', 12)
-    print(registry.lookup([IUser1], ITool))
-    print(registry.lookup([IUser1, IUser2], ITool))
-    print(registry.lookup([], ITool))
+    print(registry.lookup([IUser1], ITool))  # pylint:disable=no-member
+    print(registry.lookup([IUser1, IUser2], ITool))  # pylint:disable=no-member
+    print(registry.lookup([], ITool))  # pylint:disable=no-member
 
 
 def sync():
